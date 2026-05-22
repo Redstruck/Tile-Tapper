@@ -2,87 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Minesweeper design system. All colors HSL. */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 95 45% 92%;
+    --foreground: 150 25% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 150 25% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 150 25% 18%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 142 55% 42%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 95 35% 82%;
+    --secondary-foreground: 150 25% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 95 30% 88%;
+    --muted-foreground: 150 15% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 45 95% 60%;
+    --accent-foreground: 150 25% 18%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 80% 58%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 95 25% 78%;
+    --input: 95 25% 78%;
+    --ring: 142 55% 42%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Minesweeper specific */
+    --tile-unrevealed-1: 95 55% 65%;
+    --tile-unrevealed-2: 95 50% 58%;
+    --tile-revealed-1: 45 55% 85%;
+    --tile-revealed-2: 45 50% 80%;
+    --tile-hover: 95 60% 72%;
+    --mine: 0 75% 55%;
+    --flag: 0 80% 55%;
+
+    --num-1: 220 85% 55%;
+    --num-2: 142 60% 38%;
+    --num-3: 0 75% 55%;
+    --num-4: 270 60% 50%;
+    --num-5: 25 85% 50%;
+    --num-6: 180 65% 42%;
+    --num-7: 0 0% 25%;
+    --num-8: 0 0% 45%;
+
+    --gradient-bg: linear-gradient(135deg, hsl(95 50% 90%), hsl(140 45% 88%));
+    --gradient-header: linear-gradient(135deg, hsl(142 55% 42%), hsl(160 55% 40%));
+    --shadow-soft: 0 10px 40px -10px hsl(142 40% 30% / 0.25);
+    --shadow-tile: 0 2px 0 hsl(95 30% 50%);
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 220 20% 10%;
+    --foreground: 95 25% 92%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 20% 14%;
+    --card-foreground: 95 25% 92%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 20% 14%;
+    --popover-foreground: 95 25% 92%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 142 55% 50%;
+    --primary-foreground: 220 20% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 18% 20%;
+    --secondary-foreground: 95 25% 92%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 18% 18%;
+    --muted-foreground: 95 15% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 45 90% 60%;
+    --accent-foreground: 220 20% 10%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 220 18% 22%;
+    --input: 220 18% 22%;
+    --ring: 142 55% 50%;
+
+    --tile-unrevealed-1: 220 20% 28%;
+    --tile-unrevealed-2: 220 20% 24%;
+    --tile-revealed-1: 220 18% 16%;
+    --tile-revealed-2: 220 18% 14%;
+    --tile-hover: 220 22% 34%;
+    --mine: 0 75% 55%;
+    --flag: 0 80% 60%;
+
+    --num-1: 220 90% 70%;
+    --num-2: 142 65% 55%;
+    --num-3: 0 80% 65%;
+    --num-4: 270 70% 70%;
+    --num-5: 25 90% 60%;
+    --num-6: 180 70% 55%;
+    --num-7: 0 0% 85%;
+    --num-8: 0 0% 70%;
+
+    --gradient-bg: linear-gradient(135deg, hsl(220 25% 8%), hsl(220 20% 12%));
+    --gradient-header: linear-gradient(135deg, hsl(142 55% 35%), hsl(160 55% 32%));
+    --shadow-soft: 0 10px 40px -10px hsl(0 0% 0% / 0.6);
+    --shadow-tile: 0 2px 0 hsl(220 25% 6%);
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -100,6 +138,47 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: var(--gradient-bg);
+    font-family: 'Nunito', system-ui, sans-serif;
+    min-height: 100vh;
   }
+
+  h1, h2, h3 {
+    font-family: 'Fredoka', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .tile-pop {
+    animation: tile-pop 0.18s ease-out;
+  }
+  .tile-reveal {
+    animation: tile-reveal 0.25s ease-out backwards;
+  }
+  .mine-explode {
+    animation: mine-explode 0.4s ease-out;
+  }
+  .face-bounce {
+    animation: face-bounce 0.3s ease-out;
+  }
+}
+
+@keyframes tile-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes tile-reveal {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes mine-explode {
+  0% { transform: scale(1); background: hsl(var(--mine)); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+@keyframes face-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15) rotate(-5deg); }
 }
