@@ -19,6 +19,25 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        tile: {
+          "unrevealed-1": "hsl(var(--tile-unrevealed-1))",
+          "unrevealed-2": "hsl(var(--tile-unrevealed-2))",
+          "revealed-1": "hsl(var(--tile-revealed-1))",
+          "revealed-2": "hsl(var(--tile-revealed-2))",
+          hover: "hsl(var(--tile-hover))",
+        },
+        mine: "hsl(var(--mine))",
+        flag: "hsl(var(--flag))",
+        num: {
+          1: "hsl(var(--num-1))",
+          2: "hsl(var(--num-2))",
+          3: "hsl(var(--num-3))",
+          4: "hsl(var(--num-4))",
+          5: "hsl(var(--num-5))",
+          6: "hsl(var(--num-6))",
+          7: "hsl(var(--num-7))",
+          8: "hsl(var(--num-8))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -80,10 +99,32 @@ export default {
             height: "0",
           },
         },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.9)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.4s ease-out",
+        "scale-in": "scale-in 0.3s ease-out",
+      },
+      backgroundImage: {
+        "gradient-bg": "var(--gradient-bg)",
+        "gradient-header": "var(--gradient-header)",
+      },
+      boxShadow: {
+        soft: "var(--shadow-soft)",
+        tile: "var(--shadow-tile)",
+      },
+      fontFamily: {
+        display: ["Fredoka", "system-ui", "sans-serif"],
+        body: ["Nunito", "system-ui", "sans-serif"],
       },
     },
   },
