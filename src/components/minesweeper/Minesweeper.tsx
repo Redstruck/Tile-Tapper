@@ -27,9 +27,33 @@ const BEST_KEY = "minesweeper:best";
 const PREF_KEY = "minesweeper:prefs";
 
 function fireConfetti() {
-  confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
-  confetti({ particleCount: 80, angle: 60, spread: 70, origin: { x: 0 } });
-  confetti({ particleCount: 80, angle: 120, spread: 70, origin: { x: 1 } });
+  const colors = ["#22c55e", "#eab308", "#3b82f6", "#ef4444", "#a855f7", "#f97316"];
+  // Big center burst
+  confetti({ particleCount: 180, spread: 100, startVelocity: 55, origin: { y: 0.6 }, colors, scalar: 1.1 });
+  // Side cannons
+  confetti({ particleCount: 120, angle: 60, spread: 80, startVelocity: 65, origin: { x: 0, y: 0.7 }, colors });
+  confetti({ particleCount: 120, angle: 120, spread: 80, startVelocity: 65, origin: { x: 1, y: 0.7 }, colors });
+  // Delayed follow-up bursts
+  setTimeout(() => {
+    confetti({ particleCount: 80, spread: 120, startVelocity: 35, origin: { y: 0.5 }, colors, scalar: 0.9, ticks: 200 });
+  }, 250);
+  setTimeout(() => {
+    confetti({ particleCount: 60, angle: 90, spread: 140, startVelocity: 45, origin: { x: 0.3, y: 0.4 }, colors, shapes: ["star"], scalar: 1.2 });
+    confetti({ particleCount: 60, angle: 90, spread: 140, startVelocity: 45, origin: { x: 0.7, y: 0.4 }, colors, shapes: ["star"], scalar: 1.2 });
+  }, 500);
+  setTimeout(() => {
+    confetti({ particleCount: 100, spread: 160, startVelocity: 30, origin: { y: 0.3 }, colors, scalar: 0.8 });
+  }, 800);
+}
+
+function triggerShake() {
+  const el = document.getElementById("minesweeper-root");
+  if (!el) return;
+  el.classList.remove("screen-shake");
+  // force reflow so the animation can replay
+  void el.offsetWidth;
+  el.classList.add("screen-shake");
+  setTimeout(() => el.classList.remove("screen-shake"), 600);
 }
 
 export function Minesweeper() {
@@ -126,6 +150,7 @@ export function Minesweeper() {
         nb[r][c].exploded = true;
         setStatus("lost");
         sounds.lose();
+        triggerShake();
         return revealAllMines(nb);
       }
       const nb = revealFlood(working, r, c);
@@ -164,6 +189,7 @@ export function Minesweeper() {
       if (hitMine) {
         setStatus("lost");
         sounds.lose();
+        triggerShake();
         return revealAllMines(nb);
       }
       sounds.click();
@@ -184,7 +210,7 @@ export function Minesweeper() {
   const face = status === "won" ? "😎" : status === "lost" ? "😵" : "🙂";
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center px-4 py-6 sm:py-10 animate-fade-in">
+    <div id="minesweeper-root" className="min-h-screen w-full flex flex-col items-center px-4 py-6 sm:py-10 animate-fade-in">
       <header className="w-full max-w-5xl flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-header bg-clip-text text-transparent">
