@@ -1,5 +1,4 @@
-import { memo } from "react";
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import type { Cell as CellType } from "@/lib/minesweeper";
 import { cn } from "@/lib/utils";
 import { Flag } from "lucide-react";
