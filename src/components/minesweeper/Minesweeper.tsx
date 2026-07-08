@@ -27,23 +27,12 @@ const BEST_KEY = "minesweeper:best";
 const PREF_KEY = "minesweeper:prefs";
 
 function fireConfetti() {
-  const colors = ["#22c55e", "#eab308", "#3b82f6", "#ef4444", "#a855f7", "#f97316"];
-  // Big center burst
-  confetti({ particleCount: 180, spread: 100, startVelocity: 55, origin: { y: 0.6 }, colors, scalar: 1.1 });
-  // Side cannons
-  confetti({ particleCount: 120, angle: 60, spread: 80, startVelocity: 65, origin: { x: 0, y: 0.7 }, colors });
-  confetti({ particleCount: 120, angle: 120, spread: 80, startVelocity: 65, origin: { x: 1, y: 0.7 }, colors });
-  // Delayed follow-up bursts
+  const colors = ["#4285F4", "#EA4335", "#FBBC04", "#34A853", "#a855f7"];
+  confetti({ particleCount: 120, spread: 70, startVelocity: 45, origin: { y: 0.65 }, colors });
   setTimeout(() => {
-    confetti({ particleCount: 80, spread: 120, startVelocity: 35, origin: { y: 0.5 }, colors, scalar: 0.9, ticks: 200 });
-  }, 250);
-  setTimeout(() => {
-    confetti({ particleCount: 60, angle: 90, spread: 140, startVelocity: 45, origin: { x: 0.3, y: 0.4 }, colors, shapes: ["star"], scalar: 1.2 });
-    confetti({ particleCount: 60, angle: 90, spread: 140, startVelocity: 45, origin: { x: 0.7, y: 0.4 }, colors, shapes: ["star"], scalar: 1.2 });
-  }, 500);
-  setTimeout(() => {
-    confetti({ particleCount: 100, spread: 160, startVelocity: 30, origin: { y: 0.3 }, colors, scalar: 0.8 });
-  }, 800);
+    confetti({ particleCount: 60, angle: 60, spread: 55, origin: { x: 0, y: 0.8 }, colors });
+    confetti({ particleCount: 60, angle: 120, spread: 55, origin: { x: 1, y: 0.8 }, colors });
+  }, 180);
 }
 
 function triggerShake() {

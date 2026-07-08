@@ -1,4 +1,4 @@
-import { memo, useRef, useState } from "react";
+import { memo } from "react";
 import type { Cell as CellType } from "@/lib/minesweeper";
 import { cn } from "@/lib/utils";
 import { Flag } from "lucide-react";
@@ -18,16 +18,8 @@ const numColor = ["", "text-num-1", "text-num-2", "text-num-3", "text-num-4", "t
 
 function CellInner({ cell, r, c, size, onReveal, onFlag, onChord, disabled }: Props) {
   const isLight = (r + c) % 2 === 0;
-  const [ripples, setRipples] = useState<number[]>([]);
-  const rippleId = useRef(0);
-  const spawnRipple = () => {
-    const id = ++rippleId.current;
-    setRipples((prev) => [...prev, id]);
-    setTimeout(() => setRipples((prev) => prev.filter((x) => x !== id)), 500);
-  };
   const handleClick = (e: React.MouseEvent) => {
     if (disabled) return;
-    spawnRipple();
     if (e.shiftKey) { onFlag(r, c); return; }
     if (cell.state === "revealed") onChord(r, c);
     else onReveal(r, c);
@@ -64,9 +56,6 @@ function CellInner({ cell, r, c, size, onReveal, onFlag, onChord, disabled }: Pr
         flagged && (isLight ? "bg-tile-unrevealed-1" : "bg-tile-unrevealed-2"),
       )}
     >
-      {ripples.map((id) => (
-        <span key={id} className="tile-ripple" />
-      ))}
       {cell.exploded && <span className="mine-shockwave" />}
       {revealed && cell.isMine && (
         <span style={{ fontSize: size * 0.6 }}>💣</span>
