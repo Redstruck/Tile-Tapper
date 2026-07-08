@@ -28,7 +28,7 @@ export function GameBoard({ board, onReveal, onFlag, onChord, disabled }: Props)
   }, [rows, cols]);
 
   return (
-    <div className="rounded-2xl overflow-hidden shadow-soft bg-card p-2 mx-auto animate-scale-in" style={{ width: "fit-content" }}>
+    <div className="game-board-shell rounded-2xl overflow-hidden shadow-soft bg-card p-2 mx-auto" style={{ width: "fit-content" }}>
       <div className="grid rounded-xl overflow-hidden" style={{ gridTemplateColumns: `repeat(${cols}, ${size}px)` }}>
         {board.map((row, r) =>
           row.map((cell, c) => (

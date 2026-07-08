@@ -23,39 +23,164 @@ import { setSoundEnabled, sounds } from "@/lib/sounds";
 type GameStatus = "idle" | "playing" | "won" | "lost";
 type Theme = "light" | "dark" | "system";
 
+type GameEvent =
+  | { id: number; type: "reveal" | "flag" | "chord" | "restart" }
+  | { id: number; type: "explosion" }
+  | { id: number; type: "win"; difficulty: Difficulty; elapsed: number };
+
+interface GameState {
+  difficulty: Difficulty;
+  board: Board;
+  status: GameStatus;
+  time: number;
+  startedAt: number | null;
+  event: GameEvent | null;
+}
+
+type GameAction =
+  | { type: "restart"; difficulty: Difficulty; eventId: number }
+  | { type: "reveal"; r: number; c: number; now: number; eventId: number }
+  | { type: "flag"; r: number; c: number; eventId: number }
+  | { type: "chord"; r: number; c: number; now: number; eventId: number }
+  | { type: "tick"; now: number };
+
 const BEST_KEY = "minesweeper:best";
 const PREF_KEY = "minesweeper:prefs";
 
-function fireConfetti() {
-  const colors = ["#4285F4", "#EA4335", "#FBBC04", "#34A853", "#a855f7"];
-  confetti({ particleCount: 120, spread: 70, startVelocity: 45, origin: { y: 0.65 }, colors });
-  setTimeout(() => {
-    confetti({ particleCount: 60, angle: 60, spread: 55, origin: { x: 0, y: 0.8 }, colors });
-    confetti({ particleCount: 60, angle: 120, spread: 55, origin: { x: 1, y: 0.8 }, colors });
-  }, 180);
+function createGameState(difficulty: Difficulty, event: GameEvent | null = null): GameState {
+  const cfg = DIFFICULTIES[difficulty];
+  return {
+    difficulty,
+    board: createEmptyBoard(cfg.rows, cfg.cols),
+    status: "idle",
+    time: 0,
+    startedAt: null,
+    event,
+  };
 }
 
-function triggerShake() {
+function fireConfetti() {
+  const colors = ["#4285F4", "#EA4335", "#FBBC04", "#34A853", "#a855f7", "#F97316"];
+  confetti({ particleCount: 260, spread: 105, startVelocity: 64, gravity: 0.85, ticks: 260, origin: { y: 0.62 }, colors });
+  confetti({ particleCount: 120, angle: 58, spread: 72, startVelocity: 72, origin: { x: 0, y: 0.82 }, colors });
+  confetti({ particleCount: 120, angle: 122, spread: 72, startVelocity: 72, origin: { x: 1, y: 0.82 }, colors });
+
+  const end = Date.now() + 1900;
+  const rain = () => {
+    confetti({
+      particleCount: 12,
+      spread: 80,
+      startVelocity: 34,
+      scalar: 1.15,
+      origin: { x: Math.random(), y: Math.random() * 0.25 },
+      colors,
+    });
+    if (Date.now() < end) requestAnimationFrame(rain);
+  };
+  setTimeout(rain, 180);
+}
+
+function triggerExplosionEffects() {
   const el = document.getElementById("minesweeper-root");
   if (!el) return;
   el.classList.remove("screen-shake");
+  el.classList.remove("blast-flash");
   // force reflow so the animation can replay
   void el.offsetWidth;
   el.classList.add("screen-shake");
-  setTimeout(() => el.classList.remove("screen-shake"), 600);
+  el.classList.add("blast-flash");
+  setTimeout(() => {
+    el.classList.remove("screen-shake");
+    el.classList.remove("blast-flash");
+  }, 900);
+}
+
+function reduceGame(state: GameState, action: GameAction): GameState {
+  switch (action.type) {
+    case "restart":
+      return createGameState(action.difficulty, { id: action.eventId, type: "restart" });
+    case "tick": {
+      if (state.status !== "playing" || !state.startedAt) return state;
+      const time = Math.floor((action.now - state.startedAt) / 1000);
+      return time === state.time ? state : { ...state, time };
+    }
+    case "flag": {
+      if (state.status === "won" || state.status === "lost") return state;
+      const cell = state.board[action.r][action.c];
+      if (cell.state === "revealed") return state;
+      const board = state.board.map((row) => row.map((item) => ({ ...item })));
+      board[action.r][action.c].state = cell.state === "flagged" ? "hidden" : "flagged";
+      return { ...state, board, event: { id: action.eventId, type: "flag" } };
+    }
+    case "reveal": {
+      if (state.status === "won" || state.status === "lost") return state;
+      const current = state.board[action.r][action.c];
+      if (current.state === "flagged" || current.state === "revealed") return state;
+
+      let board = state.board;
+      let status: GameStatus = state.status;
+      let startedAt = state.startedAt;
+
+      if (state.status === "idle") {
+        board = placeMines(state.board, DIFFICULTIES[state.difficulty].mines, action.r, action.c);
+        status = "playing";
+        startedAt = action.now;
+      }
+
+      const cell = board[action.r][action.c];
+      if (cell.isMine) {
+        const exploded = board.map((row) => row.map((item) => ({ ...item })));
+        exploded[action.r][action.c].state = "revealed";
+        exploded[action.r][action.c].exploded = true;
+        return { ...state, board: revealAllMines(exploded), status: "lost", startedAt, event: { id: action.eventId, type: "explosion" } };
+      }
+
+      const revealed = revealFlood(board, action.r, action.c);
+      if (checkWin(revealed)) {
+        const elapsed = Math.floor((action.now - (startedAt || action.now)) / 1000);
+        return {
+          ...state,
+          board: flagAllMines(revealed),
+          status: "won",
+          time: elapsed,
+          startedAt,
+          event: { id: action.eventId, type: "win", difficulty: state.difficulty, elapsed },
+        };
+      }
+      return { ...state, board: revealed, status, startedAt, event: { id: action.eventId, type: "reveal" } };
+    }
+    case "chord": {
+      if (state.status !== "playing") return state;
+      const { board, hitMine } = chord(state.board, action.r, action.c);
+      if (board === state.board) return state;
+      if (hitMine) {
+        return { ...state, board: revealAllMines(board), status: "lost", event: { id: action.eventId, type: "explosion" } };
+      }
+      if (checkWin(board)) {
+        const elapsed = Math.floor((action.now - (state.startedAt || action.now)) / 1000);
+        return {
+          ...state,
+          board: flagAllMines(board),
+          status: "won",
+          time: elapsed,
+          event: { id: action.eventId, type: "win", difficulty: state.difficulty, elapsed },
+        };
+      }
+      return { ...state, board, event: { id: action.eventId, type: "chord" } };
+    }
+    default:
+      return state;
+  }
 }
 
 export function Minesweeper() {
-  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
-  const [board, setBoard] = useState<Board>(() => createEmptyBoard(DIFFICULTIES.easy.rows, DIFFICULTIES.easy.cols));
-  const [status, setStatus] = useState<GameStatus>("idle");
-  const [time, setTime] = useState(0);
+  const [game, setGame] = useState<GameState>(() => createGameState("easy"));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sound, setSound] = useState(true);
   const [theme, setTheme] = useState<Theme>("system");
   const [bestTimes, setBestTimes] = useState<Record<string, number>>({});
   const [faceBounce, setFaceBounce] = useState(false);
-  const startedAt = useRef<number | null>(null);
+  const eventId = useRef(0);
 
   useEffect(() => {
     try {
@@ -87,116 +212,70 @@ export function Minesweeper() {
   }, [theme]);
 
   useEffect(() => {
-    if (status !== "playing") return;
+    if (game.status !== "playing") return;
     const id = setInterval(() => {
-      if (startedAt.current) setTime(Math.floor((Date.now() - startedAt.current) / 1000));
+      setGame((prev) => reduceGame(prev, { type: "tick", now: Date.now() }));
     }, 250);
     return () => clearInterval(id);
-  }, [status]);
+  }, [game.status]);
 
-  const config = DIFFICULTIES[difficulty];
-  const flags = useMemo(() => countFlags(board), [board]);
+  const config = DIFFICULTIES[game.difficulty];
+  const flags = useMemo(() => countFlags(game.board), [game.board]);
   const mineCounter = config.mines - flags;
 
-  const recordBest = useCallback((elapsed: number) => {
+  const recordBest = useCallback((diff: Difficulty, elapsed: number) => {
     setBestTimes((bt) => {
-      const cur = bt[difficulty];
+      const cur = bt[diff];
       if (!cur || elapsed < cur) {
-        const next = { ...bt, [difficulty]: elapsed };
+        const next = { ...bt, [diff]: elapsed };
         localStorage.setItem(BEST_KEY, JSON.stringify(next));
         return next;
       }
       return bt;
     });
-  }, [difficulty]);
+  }, []);
 
-  const restart = useCallback((d: Difficulty = difficulty) => {
-    const cfg = DIFFICULTIES[d];
-    setBoard(createEmptyBoard(cfg.rows, cfg.cols));
-    setStatus("idle");
-    setTime(0);
-    startedAt.current = null;
+  useEffect(() => {
+    const event = game.event;
+    if (!event) return;
+    if (event.type === "reveal") sounds.reveal();
+    if (event.type === "flag") sounds.flag();
+    if (event.type === "chord") sounds.click();
+    if (event.type === "explosion") {
+      sounds.explosion();
+      triggerExplosionEffects();
+    }
+    if (event.type === "win") {
+      sounds.win();
+      recordBest(event.difficulty, event.elapsed);
+      fireConfetti();
+    }
+  }, [game.event, recordBest]);
+
+  const restart = useCallback((d: Difficulty = game.difficulty) => {
+    setGame((prev) => reduceGame(prev, { type: "restart", difficulty: d, eventId: ++eventId.current }));
     setFaceBounce(true);
     setTimeout(() => setFaceBounce(false), 300);
-  }, [difficulty]);
+  }, [game.difficulty]);
 
-  const changeDifficulty = (d: Difficulty) => { setDifficulty(d); restart(d); };
+  const changeDifficulty = (d: Difficulty) => restart(d);
 
   const handleReveal = useCallback((r: number, c: number) => {
-    if (status === "won" || status === "lost") return;
-    setBoard((prev) => {
-      let working = prev;
-      if (status === "idle") {
-        working = placeMines(prev, config.mines, r, c);
-        startedAt.current = Date.now();
-        setStatus("playing");
-      }
-      const cell = working[r][c];
-      if (cell.state === "flagged" || cell.state === "revealed") return working;
-      if (cell.isMine) {
-        const nb = working.map((row) => row.map((c) => ({ ...c })));
-        nb[r][c].state = "revealed";
-        nb[r][c].exploded = true;
-        setStatus("lost");
-        sounds.lose();
-        triggerShake();
-        return revealAllMines(nb);
-      }
-      const nb = revealFlood(working, r, c);
-      sounds.reveal();
-      if (checkWin(nb)) {
-        const finalBoard = flagAllMines(nb);
-        setStatus("won");
-        const elapsed = Math.floor((Date.now() - (startedAt.current || Date.now())) / 1000);
-        setTime(elapsed);
-        sounds.win();
-        recordBest(elapsed);
-        setTimeout(fireConfetti, 50);
-        return finalBoard;
-      }
-      return nb;
-    });
-  }, [status, config.mines, recordBest]);
+    sounds.prime();
+    setGame((prev) => reduceGame(prev, { type: "reveal", r, c, now: Date.now(), eventId: ++eventId.current }));
+  }, []);
 
   const handleFlag = useCallback((r: number, c: number) => {
-    if (status === "won" || status === "lost") return;
-    setBoard((prev) => {
-      const cell = prev[r][c];
-      if (cell.state === "revealed") return prev;
-      const nb = prev.map((row) => row.map((c) => ({ ...c })));
-      nb[r][c].state = cell.state === "flagged" ? "hidden" : "flagged";
-      sounds.flag();
-      return nb;
-    });
-  }, [status]);
+    sounds.prime();
+    setGame((prev) => reduceGame(prev, { type: "flag", r, c, eventId: ++eventId.current }));
+  }, []);
 
   const handleChord = useCallback((r: number, c: number) => {
-    if (status !== "playing") return;
-    setBoard((prev) => {
-      const { board: nb, hitMine } = chord(prev, r, c);
-      if (nb === prev) return prev;
-      if (hitMine) {
-        setStatus("lost");
-        sounds.lose();
-        triggerShake();
-        return revealAllMines(nb);
-      }
-      sounds.click();
-      if (checkWin(nb)) {
-        const finalBoard = flagAllMines(nb);
-        setStatus("won");
-        const elapsed = Math.floor((Date.now() - (startedAt.current || Date.now())) / 1000);
-        setTime(elapsed);
-        sounds.win();
-        recordBest(elapsed);
-        setTimeout(fireConfetti, 50);
-        return finalBoard;
-      }
-      return nb;
-    });
-  }, [status, recordBest]);
+    sounds.prime();
+    setGame((prev) => reduceGame(prev, { type: "chord", r, c, now: Date.now(), eventId: ++eventId.current }));
+  }, []);
 
-  const face = status === "won" ? "😎" : status === "lost" ? "😵" : "🙂";
+  const face = game.status === "won" ? "😎" : game.status === "lost" ? "😵" : "🙂";
 
   return (
     <div id="minesweeper-root" className="min-h-screen w-full flex flex-col items-center px-4 py-6 sm:py-10 animate-fade-in">
@@ -218,7 +297,7 @@ export function Minesweeper() {
             key={d}
             onClick={() => changeDifficulty(d)}
             className={`px-4 py-1.5 rounded-full font-display font-semibold text-sm transition-all ${
-              difficulty === d ? "bg-gradient-header text-primary-foreground shadow-md scale-105" : "text-muted-foreground hover:text-foreground"
+              game.difficulty === d ? "bg-gradient-header text-primary-foreground shadow-md scale-105" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {DIFFICULTIES[d].label}
@@ -226,9 +305,9 @@ export function Minesweeper() {
         ))}
       </div>
 
-      <HUD mines={mineCounter} time={time} face={face} onRestart={() => restart()} bouncing={faceBounce} />
+      <HUD mines={mineCounter} time={game.time} face={face} onRestart={() => restart()} bouncing={faceBounce} />
 
-      <GameBoard board={board} onReveal={handleReveal} onFlag={handleFlag} onChord={handleChord} disabled={status === "won" || status === "lost"} />
+      <GameBoard board={game.board} onReveal={handleReveal} onFlag={handleFlag} onChord={handleChord} disabled={game.status === "won" || game.status === "lost"} />
 
       <div className="mt-6 text-center text-sm text-muted-foreground max-w-md">
         <p>
@@ -236,10 +315,10 @@ export function Minesweeper() {
           <span className="font-semibold text-foreground">Right click</span> flag ·{" "}
           <span className="font-semibold text-foreground">Click number</span> to chord
         </p>
-        {status === "won" && (
-          <p className="mt-2 text-primary font-display font-semibold text-lg animate-fade-in">You won in {time}s! 🎉</p>
+        {game.status === "won" && (
+          <p className="mt-2 text-primary font-display font-semibold text-lg animate-fade-in">You won in {game.time}s! 🎉</p>
         )}
-        {status === "lost" && (
+        {game.status === "lost" && (
           <p className="mt-2 text-destructive font-display font-semibold text-lg animate-fade-in">Boom! Try again.</p>
         )}
       </div>
