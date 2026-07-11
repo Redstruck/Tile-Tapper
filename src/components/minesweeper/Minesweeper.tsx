@@ -282,7 +282,7 @@ export function Minesweeper() {
       <header className="w-full max-w-5xl flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-header bg-clip-text text-transparent">
-            Minesweeper
+            Tile Tapper
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">Clear the field. Trust the numbers.</p>
         </div>
