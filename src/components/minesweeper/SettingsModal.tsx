@@ -1,8 +1,7 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Grid2x2, Monitor, Moon, Sun, Volume2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Theme = "light" | "dark" | "system";
 
@@ -18,6 +17,19 @@ interface Props {
   bestTimes: Record<string, number>;
 }
 
+const THEMES = [
+  { v: "light" as const, label: "Light" },
+  { v: "dark" as const, label: "Dark" },
+  { v: "system" as const, label: "System" },
+];
+
+const DIFFICULTIES = ["easy", "medium", "hard"] as const;
+
+function formatTime(seconds: number | undefined) {
+  if (!seconds) return "—";
+  return `${seconds}s`;
+}
+
 export function SettingsModal({
   open,
   onOpenChange,
@@ -31,52 +43,89 @@ export function SettingsModal({
 }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
-        <DialogHeader>
-          <DialogTitle className="font-display text-2xl">Settings</DialogTitle>
+      <DialogContent className="sm:max-w-sm rounded-2xl p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
+          <DialogTitle className="font-display text-xl tracking-tight">Settings</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Sound, play style, and your best clears.
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6 pt-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="sound" className="flex items-center gap-2 text-base">
-              <Volume2 className="w-4 h-4" /> Sound effects
-            </Label>
-            <Switch id="sound" checked={sound} onCheckedChange={setSound} />
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <Label htmlFor="chording" className="flex items-center gap-2 text-base">
-                <Grid2x2 className="w-4 h-4" /> Chording
-              </Label>
-              <p className="text-xs text-muted-foreground pl-6">Click a number to clear neighbors when flags match</p>
-            </div>
-            <Switch id="chording" checked={chording} onCheckedChange={setChording} />
-          </div>
-          <div>
-            <Label className="text-base mb-2 block">Theme</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {([
-                { v: "light", icon: Sun, label: "Light" },
-                { v: "dark", icon: Moon, label: "Dark" },
-                { v: "system", icon: Monitor, label: "Auto" },
-              ] as const).map(({ v, icon: Icon, label }) => (
-                <Button key={v} variant={theme === v ? "default" : "outline"} onClick={() => setTheme(v)} className="flex flex-col h-auto py-3 gap-1">
-                  <Icon className="w-4 h-4" />
-                  <span className="text-xs">{label}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <Label className="text-base mb-2 block">Best times</Label>
-            <div className="space-y-2">
-              {(["easy", "medium", "hard"] as const).map((d) => (
-                <div key={d} className="flex items-center justify-between bg-muted rounded-lg px-3 py-2">
-                  <span className="capitalize font-medium">{d}</span>
-                  <span className="font-display tabular-nums">{bestTimes[d] ? `${bestTimes[d]}s` : "—"}</span>
+
+        <div className="px-5 py-4 space-y-5">
+          <section className="space-y-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Preferences
+            </h3>
+            <div className="rounded-lg bg-muted divide-y divide-border overflow-hidden">
+              <div className="flex items-center justify-between gap-4 px-3.5 py-3">
+                <div className="min-w-0 space-y-0.5">
+                  <Label htmlFor="sound" className="text-sm font-semibold cursor-pointer">
+                    Sound effects
+                  </Label>
+                  <p className="text-xs text-muted-foreground leading-snug">Clicks, flags, and win fanfare</p>
                 </div>
+                <Switch id="sound" checked={sound} onCheckedChange={setSound} />
+              </div>
+              <div className="flex items-center justify-between gap-4 px-3.5 py-3">
+                <div className="min-w-0 space-y-0.5">
+                  <Label htmlFor="chording" className="text-sm font-semibold cursor-pointer">
+                    Chording
+                  </Label>
+                  <p className="text-xs text-muted-foreground leading-snug">
+                    Click a number to clear neighbors when flags match
+                  </p>
+                </div>
+                <Switch id="chording" checked={chording} onCheckedChange={setChording} />
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Appearance
+            </h3>
+            <div className="flex gap-1 p-1 rounded-full bg-muted" role="group" aria-label="Theme">
+              {THEMES.map(({ v, label }) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setTheme(v)}
+                  aria-pressed={theme === v}
+                  className={cn(
+                    "flex-1 rounded-full px-3 py-2 font-display text-sm font-semibold transition-all",
+                    theme === v
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
               ))}
             </div>
-          </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Best times
+            </h3>
+            <div className="rounded-lg bg-muted overflow-hidden">
+              <table className="w-full text-sm">
+                <tbody>
+                  {DIFFICULTIES.map((d, i) => (
+                    <tr
+                      key={d}
+                      className={cn(i < DIFFICULTIES.length - 1 && "border-b border-border")}
+                    >
+                      <td className="px-3.5 py-2.5 capitalize font-medium">{d}</td>
+                      <td className="px-3.5 py-2.5 text-right font-display tabular-nums">
+                        {formatTime(bestTimes[d])}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
       </DialogContent>
     </Dialog>
