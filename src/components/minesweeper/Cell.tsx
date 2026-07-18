@@ -7,7 +7,6 @@ interface Props {
   cell: CellType;
   r: number;
   c: number;
-  size: number;
   onReveal: (r: number, c: number) => void;
   onFlag: (r: number, c: number) => void;
   onChord: (r: number, c: number) => void;
@@ -16,7 +15,7 @@ interface Props {
 
 const numColor = ["", "text-num-1", "text-num-2", "text-num-3", "text-num-4", "text-num-5", "text-num-6", "text-num-7", "text-num-8"];
 
-function CellInner({ cell, r, c, size, onReveal, onFlag, onChord, disabled }: Props) {
+function CellInner({ cell, r, c, onReveal, onFlag, onChord, disabled }: Props) {
   const [pulse, setPulse] = useState(0);
   const isLight = (r + c) % 2 === 0;
   const handleClick = (e: React.MouseEvent) => {
@@ -46,7 +45,11 @@ function CellInner({ cell, r, c, size, onReveal, onFlag, onChord, disabled }: Pr
       onContextMenu={handleContext}
       onMouseDown={handleAux}
       aria-label={`Cell ${r + 1}, ${c + 1}`}
-      style={{ width: size, height: size, fontSize: size * 0.55 }}
+      style={{
+        width: "var(--cell-size)",
+        height: "var(--cell-size)",
+        fontSize: "calc(var(--cell-size) * 0.55)",
+      }}
       className={cn(
         "relative flex items-center justify-center font-display font-bold select-none transition-transform duration-100 will-change-transform",
         "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:z-10",
@@ -64,13 +67,16 @@ function CellInner({ cell, r, c, size, onReveal, onFlag, onChord, disabled }: Pr
       {cell.exploded && <span className="mine-fireball" />}
       {cell.exploded && <span className="mine-sparks" />}
       {revealed && cell.isMine && (
-        <span className="relative z-10" style={{ fontSize: size * 0.66 }}>💣</span>
+        <span className="relative z-10" style={{ fontSize: "calc(var(--cell-size) * 0.66)" }}>💣</span>
       )}
       {revealed && !cell.isMine && cell.adjacent > 0 && (
         <span className={cn(numColor[cell.adjacent], "drop-shadow-sm")}>{cell.adjacent}</span>
       )}
       {flagged && (
-        <Flag className="text-flag fill-flag tile-pop" style={{ width: size * 0.55, height: size * 0.55 }} />
+        <Flag
+          className="text-flag fill-flag tile-pop"
+          style={{ width: "calc(var(--cell-size) * 0.55)", height: "calc(var(--cell-size) * 0.55)" }}
+        />
       )}
     </button>
   );
@@ -84,7 +90,6 @@ function visualCellKey(cell: CellType) {
 export const Cell = memo(CellInner, (prev, next) => (
   prev.r === next.r &&
   prev.c === next.c &&
-  prev.size === next.size &&
   prev.disabled === next.disabled &&
   visualCellKey(prev.cell) === visualCellKey(next.cell)
 ));

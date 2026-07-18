@@ -5,6 +5,13 @@
 /* Minesweeper design system. All colors HSL. */
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
 
+/* Enables smooth interpolation of tile size during difficulty morphs. */
+@property --cell-size {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 36px;
+}
+
 @layer base {
   :root {
     --background: 95 45% 92%;
@@ -169,6 +176,9 @@
     transform: translateZ(0);
     backface-visibility: hidden;
   }
+  .game-board-grid {
+    background-color: hsl(var(--tile-unrevealed-2));
+  }
   .tile-pop {
     animation: tile-pop 0.24s cubic-bezier(0.2, 1.4, 0.35, 1);
   }
@@ -307,5 +317,11 @@
   #minesweeper-root.blast-flash::before {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+  .game-board-shell {
+    transition: none !important;
+  }
+  .game-board-grid {
+    transition: none !important;
   }
 }
