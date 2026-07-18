@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Monitor, Moon, Sun, Volume2 } from "lucide-react";
+import { Grid2x2, Monitor, Moon, Sun, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Theme = "light" | "dark" | "system";
@@ -11,12 +11,24 @@ interface Props {
   onOpenChange: (o: boolean) => void;
   sound: boolean;
   setSound: (v: boolean) => void;
+  chording: boolean;
+  setChording: (v: boolean) => void;
   theme: Theme;
   setTheme: (t: Theme) => void;
   bestTimes: Record<string, number>;
 }
 
-export function SettingsModal({ open, onOpenChange, sound, setSound, theme, setTheme, bestTimes }: Props) {
+export function SettingsModal({
+  open,
+  onOpenChange,
+  sound,
+  setSound,
+  chording,
+  setChording,
+  theme,
+  setTheme,
+  bestTimes,
+}: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md rounded-2xl">
@@ -29,6 +41,15 @@ export function SettingsModal({ open, onOpenChange, sound, setSound, theme, setT
               <Volume2 className="w-4 h-4" /> Sound effects
             </Label>
             <Switch id="sound" checked={sound} onCheckedChange={setSound} />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="chording" className="flex items-center gap-2 text-base">
+                <Grid2x2 className="w-4 h-4" /> Chording
+              </Label>
+              <p className="text-xs text-muted-foreground pl-6">Click a number to clear neighbors when flags match</p>
+            </div>
+            <Switch id="chording" checked={chording} onCheckedChange={setChording} />
           </div>
           <div>
             <Label className="text-base mb-2 block">Theme</Label>

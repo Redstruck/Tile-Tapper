@@ -16,8 +16,9 @@ import {
 import { GameBoard } from "./Board";
 import { HUD } from "./HUD";
 import { SettingsModal } from "./SettingsModal";
+import { HowToPlayModal } from "./HowToPlayModal";
 import { Button } from "@/components/ui/button";
-import { Settings as SettingsIcon } from "lucide-react";
+import { CircleHelp, Settings as SettingsIcon } from "lucide-react";
 import { setSoundEnabled, sounds } from "@/lib/sounds";
 
 type GameStatus = "idle" | "playing" | "won" | "lost";
@@ -176,7 +177,9 @@ function reduceGame(state: GameState, action: GameAction): GameState {
 export function Minesweeper() {
   const [game, setGame] = useState<GameState>(() => createGameState("easy"));
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [howToOpen, setHowToOpen] = useState(false);
   const [sound, setSound] = useState(true);
+  const [chording, setChording] = useState(true);
   const [theme, setTheme] = useState<Theme>("system");
   const [bestTimes, setBestTimes] = useState<Record<string, number>>({});
   const [faceBounce, setFaceBounce] = useState(false);
@@ -186,6 +189,7 @@ export function Minesweeper() {
     try {
       const p = JSON.parse(localStorage.getItem(PREF_KEY) || "{}");
       if (typeof p.sound === "boolean") setSound(p.sound);
+      if (typeof p.chording === "boolean") setChording(p.chording);
       if (p.theme) setTheme(p.theme);
       const b = JSON.parse(localStorage.getItem(BEST_KEY) || "{}");
       setBestTimes(b);
@@ -193,9 +197,9 @@ export function Minesweeper() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(PREF_KEY, JSON.stringify({ sound, theme }));
+    localStorage.setItem(PREF_KEY, JSON.stringify({ sound, theme, chording }));
     setSoundEnabled(sound);
-  }, [sound, theme]);
+  }, [sound, theme, chording]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -271,9 +275,10 @@ export function Minesweeper() {
   }, []);
 
   const handleChord = useCallback((r: number, c: number) => {
+    if (!chording) return;
     sounds.prime();
     setGame((prev) => reduceGame(prev, { type: "chord", r, c, now: Date.now(), eventId: ++eventId.current }));
-  }, []);
+  }, [chording]);
 
   const face = game.status === "won" ? "😎" : game.status === "lost" ? "😵" : "🙂";
 
@@ -286,9 +291,14 @@ export function Minesweeper() {
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">Clear the field. Trust the numbers.</p>
         </div>
-        <Button variant="outline" size="icon" className="rounded-full shadow-soft" onClick={() => setSettingsOpen(true)} aria-label="Open settings">
-          <SettingsIcon className="w-5 h-5" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="rounded-full shadow-soft" onClick={() => setHowToOpen(true)} aria-label="How to play">
+            <CircleHelp className="w-5 h-5" />
+          </Button>
+          <Button variant="outline" size="icon" className="rounded-full shadow-soft" onClick={() => setSettingsOpen(true)} aria-label="Open settings">
+            <SettingsIcon className="w-5 h-5" />
+          </Button>
+        </div>
       </header>
 
       <div className="flex gap-1 mb-5 p-1.5 bg-card rounded-full shadow-soft">
@@ -312,8 +322,13 @@ export function Minesweeper() {
       <div className="mt-6 text-center text-sm text-muted-foreground max-w-md">
         <p>
           <span className="font-semibold text-foreground">Left click</span> reveal ·{" "}
-          <span className="font-semibold text-foreground">Right click</span> flag ·{" "}
-          <span className="font-semibold text-foreground">Click number</span> to chord
+          <span className="font-semibold text-foreground">Right click</span> flag
+          {chording && (
+            <>
+              {" · "}
+              <span className="font-semibold text-foreground">Click number</span> to chord
+            </>
+          )}
         </p>
         {game.status === "won" && (
           <p className="mt-2 text-primary font-display font-semibold text-lg animate-fade-in">You won in {game.time}s! 🎉</p>
@@ -323,7 +338,18 @@ export function Minesweeper() {
         )}
       </div>
 
-      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} sound={sound} setSound={setSound} theme={theme} setTheme={setTheme} bestTimes={bestTimes} />
+      <HowToPlayModal open={howToOpen} onOpenChange={setHowToOpen} />
+      <SettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        sound={sound}
+        setSound={setSound}
+        chording={chording}
+        setChording={setChording}
+        theme={theme}
+        setTheme={setTheme}
+        bestTimes={bestTimes}
+      />
     </div>
   );
 }
